@@ -5,47 +5,84 @@
     <title>Canvas1</title>
 </head>
 <body>
-	CANVAS 1
+    CANVAS 1
 
-	<div>
-		<canvas id="myCanvas" width="500" height="500" style="border:1px solid #000000;">
-		</canvas>	
-	</div>
+    <div>
+        <canvas id="myCanvas" width="500" height="500" style="border:1px solid #000000;">
+        </canvas>
+    </div>
 
-	<script>
-        {% comment %} const roomName = JSON.parse(document.getElementById('room-name').textContent); {% endcomment %}
+    <script>
 
-        const chatSocket = new WebSocket(
+        class Ball {
+            constructor(radius, color) {
+              this.radius = radius;
+              this.color = color;
+              this.x = 0;
+              this.y = 0;
+            }
+          
+            draw(context) {
+              context.beginPath();
+              context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI, false);
+              context.fillStyle = this.color;
+              context.fill();
+            }
+          }
+          
+
+        var myCanvas = document.querySelector('#myCanvas'),
+            context = myCanvas.getContext('2d'),
+            ball = new Ball(20, '#DE1E7E');
+
+        function move(x, y) {
+            ball.x = x;
+            ball.y = y;
+            context.clearRect(0, 0, myCanvas.width, myCanvas.height);
+            ball.draw(context);
+        }
+            
+        
+        const canvasSocket = new WebSocket(
             'ws://'
             + window.location.host
             + '/ws/canvas1/'
         );
 
-        chatSocket.onmessage = function(e) {
+        canvasSocket.onmessage = function(e) {
             const data = JSON.parse(e.data);
-			console.log("recebido")
-            // document.querySelector('#chat-log').value += (data.message + '\n');
+            if (data.type === 'ball_position') {
+                move(data.position.x, data.position.y);
+            }        
         };
 
-        chatSocket.onclose = function(e) {
+        canvasSocket.onclose = function(e) {
             console.error('Chat socket closed unexpectedly');
         };
 
-        {% comment %} document.querySelector('#chat-message-input').focus();
-        document.querySelector('#chat-message-input').onkeyup = function(e) {
-            if (e.key === 'Enter') {  // enter, return
-                document.querySelector('#chat-message-submit').click();
+        document.addEventListener('keydown', function(event) {
+            let command = '';
+            switch (event.key) {
+                case 'ArrowUp':
+                    command = 'move_up';
+                    break;
+                case 'ArrowDown':
+                    command = 'move_down';
+                    break;
+                case 'ArrowLeft':
+                    command = 'move_left';
+                    break;
+                case 'ArrowRight':
+                    command = 'move_right';
+                    break;
             }
-        }; {% endcomment %}
+        
+            if (command) {
+                canvasSocket.send(JSON.stringify({ command: command }));
+            }
+        });       
 
-        /**document.querySelector('#chat-message-submit').onclick = function(e) {
-            //const messageInputDom = document.querySelector('#chat-message-input');
-            const message = messageInputDom.value;
-            chatSocket.send(JSON.stringify({
-                'message': message
-            }));
-            messageInputDom.value = '';
-        };**/
+  
     </script>
 
 </body>
