@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Canvas2</title>
+</head>
+<body>
+    CANVAS 2
+
+    <div>
+        <canvas id="myCanvas" width="500" height="500" style="border:1px solid #000000;">
+        </canvas>
+    </div>
+
+    <script>
+
+        class Ball {
+            constructor(radius, color) {
+              this.radius = radius;
+              this.color = color;
+              this.x = 0;
+              this.y = 0;
+            }
+          
+            draw(context) {
+              context.beginPath();
+              context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI, false);
+              context.fillStyle = this.color;
+              context.fill();
+            }
+          }
+          
+
+        var myCanvas = document.querySelector('#myCanvas'),
+            context = myCanvas.getContext('2d'),
+            ball = new Ball(20, '#DE1E7E');
+
+        function move(x, y) {
+            ball.x = x;
+            ball.y = y;
+            context.clearRect(0, 0, myCanvas.width, myCanvas.height);
+            ball.draw(context);
+        }
+            
+        
+        const canvasSocket = new WebSocket(
+            'ws://'
+            + window.location.host
+            + '/ws/canvas2/'
+        );
+
+        canvasSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            if (data.type === 'ball_position') {
+                move(data.position.x, data.position.y);
+            }        
+        };
+
+        canvasSocket.onclose = function(e) {
+            console.error('Canvas socket closed unexpectedly');
+        };
+
+        document.addEventListener('keydown', function(event) {
+            let command = '';
+            switch (event.key) {
+                case 'ArrowUp':
+                    command = 'move_up';
+                    break;
+                case 'ArrowDown':
+                    command = 'move_down';
+                    break;
+                case 'ArrowLeft':
+                    command = 'move_left';
+                    break;
+                case 'ArrowRight':
+                    command = 'move_right';
+                    break;
+            }
+        
+            if (command) {
+                canvasSocket.send(JSON.stringify({ command: command }));
+            }
+        });       
+
+  
+    </script>
+
+</body>
+</html>

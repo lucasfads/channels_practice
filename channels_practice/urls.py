@@ -20,4 +20,5 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
 	path("canvas1/", include("canvas1.urls")),
+	path("canvas2/", include("canvas2.urls")),
 ]
